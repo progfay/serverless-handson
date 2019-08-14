@@ -4,7 +4,8 @@
   "description": "Demonstration of protecting API gateway endpoints with auth0",
   "license": "MIT",
   "dependencies": {
-    "jsonwebtoken": "^8.1.0"
+    "jsonwebtoken": "^8.1.0",
+    "uuid": "^3.3.2"
   },
   "scripts": {
     "deploy": "serverless deploy"

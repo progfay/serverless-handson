@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken')
 const AWS = require('aws-sdk') // eslint-disable-line import/no-extraneous-dependencies
+const uuid = require('uuid/v4')
 
 // Set in `environment` of serverless.yml
 const AUTH0_CLIENT_ID = process.env.AUTH0_CLIENT_ID
@@ -74,19 +75,22 @@ module.exports.post = (event, context, callback) => {
     callback(null, {
       statusCode: 400,
       headers: { 'Content-Type': 'text/plain' },
-      body: 'Couldn\'t create the todo item.'
+      body: { message: 'Couldn\'t create the todo item.' }
     })
     return
   }
 
   const params = {
-    TableName: process.env.DYNAMODB_TABLE,
+    TableName: 'posts',
     Item: {
-      id: email,
+      id: uuid(),
+      user_id: email,
       timestamp: now,
-      text: data.text
+      post: data.text
     }
   }
+
+  console.log(params)
 
   // write the todo to the database
   dynamoDb.put(params, (error) => {
@@ -141,19 +145,17 @@ module.exports.timeline = (event, context, callback) => {
     return
   }
 
-  const params = {
-    TableName: process.env.DYNAMODB_TABLE,
+  dynamoDb.query({
+    TableName: 'following',
     KeyConditionExpression: '#id = :id',
     ExpressionAttributeNames: {
-      '#id': 'id'
+      '#id': 'user_id'
     },
     ExpressionAttributeValues: {
       ':id': email
     },
     ScanIndexForward: false
-  }
-
-  dynamoDb.query(params, (error, data) => {
+  }, (error, following) => {
     // handle potential errors
     if (error) {
       console.error(error)
@@ -164,7 +166,102 @@ module.exports.timeline = (event, context, callback) => {
           'Access-Control-Allow-Credentials': true,
           'Content-Type': 'text/plain'
         },
-        body: 'Couldn\'t fetch posts.'
+        body: 'Couldn\'t fetch following.'
+      })
+      return
+    }
+
+    console.log('data: %j', following.Items)
+
+    dynamoDb.query({
+      TableName: 'posts',
+      KeyConditionExpression: '#id = :id',
+      ExpressionAttributeNames: {
+        '#id': 'user_id'
+      },
+      ExpressionAttributeValues: {
+        ':id': email
+      },
+      FilterExpression: following.map(user => `contains (user_id, ${user})`).join(' OR '),
+      ScanIndexForward: false
+    }, (err, data) => {
+      // handle potential errors
+      if (err) {
+        console.error(err)
+        callback(null, {
+          statusCode: err.statusCode || 501,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true,
+            'Content-Type': 'text/plain'
+          },
+          body: 'Couldn\'t fetch posts.'
+        })
+        return
+      }
+
+      // create a response
+      console.log('data: %j', data.Items)
+      const response = {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': event.headers.origin,
+          'Access-Control-Allow-Credentials': true
+        },
+        body: JSON.stringify({ msgs: data.Items })
+      }
+      callback(null, response)
+    })
+  })
+}
+
+module.exports.follow = (event, context, callback) => {
+  console.log('event: %j', event)
+  console.log('context: %j', context)
+
+  // 自分
+  // const email = event.requestContext.authorizer.principalId;
+
+  // const email = (event && event.queryStringParameters && event.queryStringParameters.id) ? event.queryStringParameters.id : undefined;
+  const data = JSON.parse(event.body)
+  const { follow_id } = data
+  const id = event.requestContext.authorizer.principalId
+  if (id === undefined || follow_id === undefined) {
+    callback(null, {
+      statusCode: 400,
+      headers: {
+        'Access-Control-Allow-Origin': event.headers.origin,
+        'Access-Control-Allow-Credentials': true,
+        'Content-Type': 'text/plain'
+      },
+      body: 'input email.'
+    })
+    return
+  }
+
+  const params = {
+    TableName: 'following',
+    Key: {
+      'user_id': id
+    },
+    UpdateExpression: 'SET following = list_append(following, :attrValue)',
+    ExpressionAttributeValues: {
+      ':attrValue': [ follow_id ]
+    }
+  }
+
+  dynamoDb.update(params, (error, data) => {
+    // handle potential errors
+    if (error) {
+      console.error(error)
+      callback(null, {
+        statusCode: error.statusCode || 501,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+          'Content-Type': 'text/plain'
+        },
+        body: { message: 'Couldn\'t fetch follows.' }
       })
       return
     }

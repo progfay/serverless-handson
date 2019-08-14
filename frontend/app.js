@@ -6,6 +6,7 @@ const AUTH0_DOMAIN = 'serverless-handson.auth0.com'
 const AUTH0_CALLBACK_URL = window.location.href; // eslint-disable-line
 const PUBLIC_ENDPOINT = 'https://p1193gk0i0.execute-api.ap-northeast-1.amazonaws.com/dev/api/timeline'
 const PRIVATE_ENDPOINT = ' https://p1193gk0i0.execute-api.ap-northeast-1.amazonaws.com/dev/api/post'
+const FOLLOW_ENDPOINT = 'https://p1193gk0i0.execute-api.ap-northeast-1.amazonaws.com/dev/api/follow'
 
 // initialize auth0 lock
 const lock = new Auth0Lock(AUTH0_CLIENT_ID, AUTH0_DOMAIN, { // eslint-disable-line no-undef
@@ -129,4 +130,32 @@ document.getElementById('btn-private').addEventListener('click', (e) => {
       console.log('error', e)
     })
   return false
+})
+
+// Handle public api call
+document.getElementById('btn-follow').addEventListener('click', (e) => {
+  e.preventDefault()
+
+  const token = localStorage.getItem('id_token')
+  const id = document.getElementById('email').value
+  const follow_id = document.getElementById('follow_id').value
+  const url = new URL(FOLLOW_ENDPOINT)
+
+  fetch(url, {
+    cache: 'no-store',
+    mode: 'cors',
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id, follow_id })
+  })
+    .then(response => response.text())
+    .then((data) => {
+      console.log('Message:', data)
+    })
+    .catch((e) => {
+      console.log('error', e)
+    })
 })

@@ -23,7 +23,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/*"
 
 functions:
   auth:
@@ -41,6 +41,14 @@ functions:
     events:
       - http:
           path: api/post
+          method: post
+          authorizer: auth
+          cors: true
+  follow:
+    handler: handler.follow
+    events:
+      - http:
+          path: api/follow
           method: post
           authorizer: auth
           cors: true
