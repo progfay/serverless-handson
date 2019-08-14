@@ -6,7 +6,11 @@
   "dependencies": {
     "jsonwebtoken": "^8.1.0"
   },
+  "scripts": {
+    "deploy": "serverless deploy"
+  },
   "devDependencies": {
+    "serverless": "^1.49.0",
     "serverless-offline": "^3.18.0",
     "serverless-s3-sync": "^1.8.0"
   }
