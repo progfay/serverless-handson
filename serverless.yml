@@ -72,7 +72,7 @@ resources:
     AssetsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: seccamp-serverless-handson16
+        BucketName: seccamp-serverless-handson-b
     TimelineTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
@@ -94,6 +94,6 @@ resources:
 
 custom:
   s3Sync:
-    - bucketName: seccamp-serverless-handson16
+    - bucketName: seccamp-serverless-handson-b
       localDir: frontend
       acl: public-read
