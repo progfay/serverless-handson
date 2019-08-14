@@ -96,7 +96,7 @@ module.exports.post = (event, context, callback) => {
       callback(null, {
       statusCode: error.statusCode || 501,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': event.headers.origin,
         'Access-Control-Allow-Credentials': true,
         'Content-Type': 'text/plain',
       },
@@ -109,7 +109,7 @@ module.exports.post = (event, context, callback) => {
     const response = {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': event.headers.origin,
         'Access-Control-Allow-Credentials': true,
       },
       body: JSON.stringify(params.Item),
@@ -132,7 +132,7 @@ module.exports.timeline = (event, context, callback) => {
     callback(null, {
       statusCode: 400,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': event.headers.origin,
         'Access-Control-Allow-Credentials': true,
         'Content-Type': 'text/plain',
       },
@@ -174,7 +174,7 @@ module.exports.timeline = (event, context, callback) => {
     const response = {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': event.headers.origin,
         'Access-Control-Allow-Credentials': true,
       },
       body: JSON.stringify({msgs: data.Items}),
